@@ -35,6 +35,7 @@ export default class CityScene extends THREE.Scene {
         cityBlock.position.x = x;
         cityBlock.position.z = z;
         cityBlock.rotateY(r);
+        cityBlock.updateMatrixWorld();
         this.add(cityBlock);
     }
 }

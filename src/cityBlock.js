@@ -63,6 +63,7 @@ export default class CityBlock extends THREE.Group {
         const skyscraper1 = new Skyscraper();
         skyscraper1.position.x = 1;
         skyscraper1.position.z = 1;
+        skyscraper1.updateMatrixWorld();
         this.add(skyscraper1);
 
         const lbuilding1 = new Lbuilding();
@@ -75,15 +76,18 @@ export default class CityBlock extends THREE.Group {
         const skyscraper1 = new Skyscraper();
         skyscraper1.position.x = -1;
         skyscraper1.position.z = 1;
+        skyscraper1.updateMatrixWorld();
         this.add(skyscraper1);
 
         const skyscraper2 = new Skyscraper();
         skyscraper2.position.z = -1;
+        skyscraper2.updateMatrixWorld();
         this.add(skyscraper2);
 
         const skyscraper3 = new Skyscraper();
         skyscraper3.position.x = 1;
         skyscraper3.position.z = 0.5;
+        skyscraper3.updateMatrixWorld();
         this.add(skyscraper3);
     }
 
@@ -96,17 +100,20 @@ export default class CityBlock extends THREE.Group {
         const skyscraper1 = new Skyscraper();
         skyscraper1.position.x = -1;
         skyscraper1.position.z = 1;
+        skyscraper1.updateMatrixWorld();
         this.add(skyscraper1);
 
         const skyscraper2 = new Skyscraper();
         skyscraper2.position.x = 1;
         skyscraper2.position.z = 1;
+        skyscraper2.updateMatrixWorld();
         this.add(skyscraper2);
 
         const tallSkyscraper = new TallSkyscraper();
         tallSkyscraper.rotateY(-Math.PI / 6);
         tallSkyscraper.position.x = 0;
         tallSkyscraper.position.z = -0.75;
+        tallSkyscraper.updateMatrixWorld();
         this.add(tallSkyscraper);
     }
 
