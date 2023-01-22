@@ -22,7 +22,6 @@ export default class BaseBlock extends THREE.Group {
         plane.position.x = offset.x;
         plane.position.y = offset.y;
         plane.position.z = offset.z;
-        // plane.userData.ground = true;
         this.add(plane);
     };
 }

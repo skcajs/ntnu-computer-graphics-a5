@@ -26,6 +26,7 @@ export default class Skyscraper extends THREE.Group {
         skyscraper.castShadow = true;
         skyscraper.userData.draggable = true;
         skyscraper.userData.name = 'skyscraper';
+        skyscraper.userData.baseMaterial = skyscraper.material;
         this.add(skyscraper);
     }
 }

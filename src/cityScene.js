@@ -18,12 +18,12 @@ export default class CityScene extends THREE.Scene {
 
         this.addCityBlock(1, -2, 4);
         this.addCityBlock(2, 2, 4);
-        this.addCityBlock(2, 6, 4, -Math.PI);
+        this.addCityBlock(2, 6, 4);
 
         this.addCityBlock(3, 6, 0, -Math.PI / 2);
-        this.addCityBlock(1, 6, -4, -Math.PI / 2);
+        this.addCityBlock(1, 6, -4);
         this.addCityBlock(2, 2, -4);
-        this.addCityBlock(4, -2, -4, -Math.PI / 2);
+        this.addCityBlock(4, -2, -4);
 
         this.addCityBlock(5, -6, 0);
         this.addCityBlock(2, -6, 4);

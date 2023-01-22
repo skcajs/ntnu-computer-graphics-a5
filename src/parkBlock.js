@@ -27,7 +27,6 @@ export default class ParkBlock extends THREE.Group {
         plane.position.y = offset.y;
         plane.position.z = offset.z;
         plane.receiveShadow = true;
-        // plane.userData.ground = true;
         this.add(plane);
     };
 }
