@@ -6,6 +6,8 @@ import Plotly from 'plotly.js-dist-min';
 
 const scene = new CityScene();
 
+// Plotly.newPlot('myDiv', []);
+
 let time = 0;
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -13,10 +15,6 @@ const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true });
 
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
-
-// var heatmap = h337.create({
-//     container: renderer.domElement
-// });
 
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -64,14 +62,12 @@ const mouseMove = new THREE.Vector2();
 var draggable;
 
 var raycasters;
-var raycasterHelpers;
 var hmCoords;
 
 let toggleHeatMap = false;
 
-
-let i = 0;
-
+// Raycast Helpers
+var raycasterHelpers;
 // for (let x = -hmResX; x <= hmResX; x++) {
 //     for (let z = -hmResZ / 2; z <= hmResZ / 2; z++) {
 //         hmCoords.push([x * 4 / hmResX, z * 4 / hmResZ]);
@@ -83,10 +79,12 @@ let i = 0;
 //     }
 // }
 
+// Raycast Helper
 // const rayCasterHelper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 300, 0xFFFFFF);
 // scene.add(rayCasterHelper);
 
-const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 5);
+
+const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 5, 0xffffff);
 scene.add(directionalLightHelper);
 
 
@@ -165,7 +163,7 @@ function animate() {
 
     // // TESTING INTERSECTON POINTS
     // const rayCasterLighDir = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
-    // raycaster.set(new THREE.Vector3(4, 0, -2), rayCasterLighDir.normalize());
+    // raycaster.set(new THREE.Vector3(0, 0, 2), rayCasterLighDir.normalize());
 
     // const found = raycaster.intersectObjects(scene.children);
     // if (found.length > 0 && found.some(obj => obj.object.castShadow == true)) {
@@ -183,17 +181,18 @@ function animate() {
         const rayCasterLighDir = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
         raycasters.map((raycaster, i) => {
             raycaster.set(raycaster.ray.origin, rayCasterLighDir.normalize());
+            raycasterHelpers[i].setDirection(raycaster.ray.direction);
             const found = raycaster.intersectObjects(scene.children);
             if (found.length > 0 && found.some(obj => obj.object.castShadow == true)) {
+                raycasterHelpers[i].line.material = new THREE.LineBasicMaterial({ color: 0xff0000 });
                 hmCoords[i][2] += 1;
-                // raycasterHelpers[i].line.material = new THREE.LineBasicMaterial({ color: 0xff0000 });
             } else {
-                // raycasterHelpers[i].line.material = new THREE.LineBasicMaterial({ color: 0xffffff });
-                // hmCoords[i].push(0);
+                raycasterHelpers[i].line.material = new THREE.LineBasicMaterial({ color: 0xffffff });
             }
-            // raycasterHelpers[i].setDirection(raycaster.ray.direction);
-            // raycasterHelpers[i].position.set(raycaster.ray.origin.x, raycaster.ray.origin.y, raycaster.ray.origin.z);
         });
+
+        // let data = heatmapData(hmCoords);
+        // Plotly.newPlot('myDiv', data);
     }
 
 
@@ -209,40 +208,70 @@ renderer.render(scene, camera);
 
 function calculateHeatMap() {
     if (toggleHeatMap) {
+        directionalLightHelper.color = 0xffffff;
+        directionalLightHelper.update();
         toggleHeatMap = !toggleHeatMap;
-        let hmx = hmCoords.map(coord => { coord[0]; });
-        let data = [
-            {
-                z: hmCoords,
-                type: 'heatmap'
-            }
-        ];
+        let data = heatmapData(hmCoords);
+        Plotly.newPlot('myDiv', data, {
+            marker: false,
+            width: 800,
+            height: 400,
 
-        Plotly.newPlot('myDiv', data);
+        });
+        console.log(data);
         console.log(hmCoords);
         return;
     }
+    directionalLightHelper.color = 0xff0000;
+    directionalLightHelper.update();
     raycasters = [];
     raycasterHelpers = [];
     hmCoords = [];
     toggleHeatMap = !toggleHeatMap;
 
+    const xLen = 8;
+    const zLen = 4;
+
     const hmResX = 16;
     const hmResZ = 8;
-    let hmRows = [];
 
-    for (let x = -hmResX; x <= hmResX; x++) {
-        for (let z = -hmResZ / 2; z <= hmResZ / 2; z++) {
-            hmCoords.push([x * 4 / hmResX, z * 4 / hmResZ, 0]);
-            const hmRayCaster = new THREE.Raycaster(new Vector3(x * 4 / hmResX, 0, z * 4 / hmResZ));
-            // const raycasterHelper = new THREE.ArrowHelper(hmRayCaster.ray.direction, hmRayCaster.ray.origin, 300, 0xFFFFFF);
+    for (let z = - zLen / 2; z <= zLen / 2; z += zLen / hmResZ) {
+        for (let x = -xLen / 2; x <= xLen / 2; x += xLen / hmResX) {
+            hmCoords.push([x, z, 0]);
+            const hmRayCaster = new THREE.Raycaster(new Vector3(x, 0, z));
+            const raycasterHelper = new THREE.ArrowHelper(hmRayCaster.ray.direction, hmRayCaster.ray.origin, 300, 0xFFFFFF);
             raycasters.push(hmRayCaster);
-            // raycasterHelpers.push(raycasterHelper);
+            raycasterHelpers.push(raycasterHelper);
             // scene.add(raycasterHelper);
         }
     }
     time = 0;
     directionalLight.position.set(10, 0, 15);
+}
+
+function heatmapData(data) {
+    let x = [], y = [], z = [];
+    let zInt = [];
+    let lasty = -2;
+    data.forEach(obj => {
+        let currentx = obj[0];
+        let currenty = obj[1];
+        if (currenty == lasty) {
+            zInt.push(obj[2]);
+            if (!x.some(i => i == currentx)) {
+                x.push(currentx);
+            }
+        } else {
+            if (!y.some(i => i == lasty)) {
+                y.push(lasty);
+            }
+            lasty = currenty;
+            z.push(zInt);
+            zInt = [];
+            zInt.push(obj[2]);
+        }
+    });
+    return [{ x: x, y: y, z: z, type: 'heatmap' }];
 }
 
 
