@@ -2,24 +2,21 @@ import * as THREE from 'three';
 import CityScene from './cityScene';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Vector3 } from 'three';
-
-var canvas = document.createElement('canvas');
-var ctx = canvas.getContext('2d');
-
+import h337 from 'heatmap.js/build/heatmap';
 
 const scene = new CityScene();
 
-let animateDNCycle = true;
-
 let time = 0;
-let heatMapData = [];
-let rayCasts = [];
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true });
 
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
+
+var heatmap = h337.create({
+    container: renderer.domElement
+});
 
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -66,26 +63,28 @@ const mouseClick = new THREE.Vector2();
 const mouseMove = new THREE.Vector2();
 var draggable;
 
-const rayCasters = [];
-const rayCasterHelpers = [];
-const hmCoords = [];
+var raycasters;
+var raycasterHelpers;
+var hmCoords;
 
-const hmResX = 40;
-const hmResZ = 20;
+let toggleHeatMap = false;
 
-for (let x = -hmResX / 2; x <= hmResX / 2; x++) {
-    for (let z = -hmResZ / 2; z <= hmResZ / 2; z++) {
-        hmCoords.push([x * 4 / hmResX, z * 4 / hmResZ]);
-        const hmRayCaster = new THREE.Raycaster(new Vector3(x * 4 / hmResX, 0, z * 4 / hmResZ));
-        rayCasters.push(hmRayCaster);
-        rayCasterHelpers.push(new THREE.ArrowHelper(hmRayCaster.ray.direction, hmRayCaster.ray.origin, 300, 0xFFFFFF));
-    }
-}
 
-console.log(rayCasters);
+let i = 0;
 
-const rayCasterHelper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 300, 0xFFFFFF);
-scene.add(rayCasterHelper);
+// for (let x = -hmResX; x <= hmResX; x++) {
+//     for (let z = -hmResZ / 2; z <= hmResZ / 2; z++) {
+//         hmCoords.push([x * 4 / hmResX, z * 4 / hmResZ]);
+//         const hmRayCaster = new THREE.Raycaster(new Vector3(x * 4 / hmResX, 0, z * 4 / hmResZ));
+//         // const raycasterHelper = new THREE.ArrowHelper(hmRayCaster.ray.direction, hmRayCaster.ray.origin, 300, 0xFFFFFF);
+//         raycasters.push(hmRayCaster);
+//         // raycasterHelpers.push(raycasterHelper);
+//         // scene.add(raycasterHelper);
+//     }
+// }
+
+// const rayCasterHelper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 300, 0xFFFFFF);
+// scene.add(rayCasterHelper);
 
 const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 5);
 scene.add(directionalLightHelper);
@@ -127,6 +126,9 @@ window.addEventListener('keydown', event => {
             }
             break;
         }
+        case "KeyH": {
+            calculateHeatMap();
+        }
     }
 });
 
@@ -161,18 +163,39 @@ function animate() {
     directionalLight.position.y = Math.sin(time * 0.02) * 20;
     directionalLight.position.z = Math.cos(time * 0.02) * 20;
 
-    // TESTING INTERSECTON POINTS
-    const rayCasterLighDir = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
-    raycaster.set(new THREE.Vector3(4, 0, -2), rayCasterLighDir.normalize());
+    // // TESTING INTERSECTON POINTS
+    // const rayCasterLighDir = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
+    // raycaster.set(new THREE.Vector3(4, 0, -2), rayCasterLighDir.normalize());
 
-    const found = raycaster.intersectObjects(scene.children);
-    if (found.length > 0 && found.some(obj => obj.object.castShadow == true)) {
-        rayCasterHelper.line.material = new THREE.LineBasicMaterial({ color: 0xff0000 });
-    } else {
-        rayCasterHelper.line.material = new THREE.LineBasicMaterial({ color: 0xffffff });
+    // const found = raycaster.intersectObjects(scene.children);
+    // if (found.length > 0 && found.some(obj => obj.object.castShadow == true)) {
+    //     rayCasterHelper.line.material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    // } else {
+    //     rayCasterHelper.line.material = new THREE.LineBasicMaterial({ color: 0xffffff });
+    // }
+    // rayCasterHelper.setDirection(raycaster.ray.direction);
+    // rayCasterHelper.position.set(raycaster.ray.origin.x, raycaster.ray.origin.y, raycaster.ray.origin.z);
+    // // ----------
+
+    // TESTING WITH MANY POINTS
+
+    if (toggleHeatMap) {
+        const rayCasterLighDir = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
+        raycasters.map((raycaster, i) => {
+            raycaster.set(raycaster.ray.origin, rayCasterLighDir.normalize());
+            const found = raycaster.intersectObjects(scene.children);
+            if (found.length > 0 && found.some(obj => obj.object.castShadow == true)) {
+                hmCoords[i][2] += 1;
+                // raycasterHelpers[i].line.material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+            } else {
+                // raycasterHelpers[i].line.material = new THREE.LineBasicMaterial({ color: 0xffffff });
+                // hmCoords[i].push(0);
+            }
+            // raycasterHelpers[i].setDirection(raycaster.ray.direction);
+            // raycasterHelpers[i].position.set(raycaster.ray.origin.x, raycaster.ray.origin.y, raycaster.ray.origin.z);
+        });
     }
-    rayCasterHelper.setDirection(raycaster.ray.direction);
-    rayCasterHelper.position.set(raycaster.ray.origin.x, raycaster.ray.origin.y, raycaster.ray.origin.z);
+
 
     dragObject();
     requestAnimationFrame(animate);
@@ -184,7 +207,35 @@ animate();
 renderer.render(scene, camera);
 
 
+function calculateHeatMap() {
+    if (toggleHeatMap) {
+        toggleHeatMap = !toggleHeatMap;
+        heatmap.setData({ data: hmCoords });
+        // console.log(hmCoords);
+        console.log(heatmap.getDataURL());
+        return;
+    }
+    raycasters = [];
+    raycasterHelpers = [];
+    hmCoords = [];
+    toggleHeatMap = !toggleHeatMap;
 
+    const hmResX = 16;
+    const hmResZ = 8;
+
+    for (let x = -hmResX; x <= hmResX; x++) {
+        for (let z = -hmResZ / 2; z <= hmResZ / 2; z++) {
+            hmCoords.push({ x: x * 4 / hmResX, y: z * 4 / hmResZ, value: 0 });
+            const hmRayCaster = new THREE.Raycaster(new Vector3(x * 4 / hmResX, 0, z * 4 / hmResZ));
+            // const raycasterHelper = new THREE.ArrowHelper(hmRayCaster.ray.direction, hmRayCaster.ray.origin, 300, 0xFFFFFF);
+            raycasters.push(hmRayCaster);
+            // raycasterHelpers.push(raycasterHelper);
+            // scene.add(raycasterHelper);
+        }
+    }
+    time = 0;
+    directionalLight.position.set(10, 0, 15);
+}
 
 
 
@@ -195,55 +246,55 @@ renderer.render(scene, camera);
 // calculateHeatMap(renderer, scene, camera);
 
 
-function calculateHeatMap() {
-    time = 0;
-    heatMapData = [];
-    directionalLight.position.set(10, 0, 15);
-    if (animateDNCycle) {
-        animateDayNightCycle();
-    }
+// function calculateHeatMap2() {
+//     time = 0;
+//     heatMapData = [];
+//     directionalLight.position.set(10, 0, 15);
+//     if (animateDNCycle) {
+//         animateDayNightCycle2();
+//     }
 
-}
+// }
 
-function animateDayNightCycle() {
-    renderer.render(scene, hmCamera);
-    time += 0.1;
+// function animateDayNightCycle2() {
+//     renderer.render(scene, hmCamera);
+//     time += 0.1;
 
-    let helpers = [];
+//     let helpers = [];
 
-    if (directionalLight.position.x >= 0) {
-        if (parseInt(time) % 50 == 0) {
-            let rayCastScenesI = [];
-            for (let i = 1; i >= -0.9; i -= 0.1) {
-                let rayCastScenesJ = [];
-                for (let j = -1; j < 1; j += 0.2) {
-                    const inverseDL = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
-                    raycaster.set(new THREE.Vector3(i, 0.5, j), inverseDL.normalize());
-                    console.log(raycaster.intersectObjects(scene.children).length);
-                    // const color = raycaster.intersectObjects(scene.children).length > 0 ? 0x000000 : 0xff0000;
-                    // const helperA = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 300, color);
-                    // scene.add(helperA);
-                    // helpers.push(helperA);
-                    // rayCastScenesJ.push(raycaster.intersectObjects(scene.children).length > 0 ? 1 : 0);
-                }
-                // helpers.forEach(help => scene.remove(help));
-                rayCastScenesI.push(rayCastScenesJ);
-            }
-            rayCasts.push(rayCastScenesI);
-        }
-        directionalLight.position.x = Math.sin(time * 0.02) * 20;
-        directionalLight.position.y = Math.sin(time * 0.02) * 20;
-        directionalLight.position.z = Math.cos(time * 0.02) * 20;
-    }
-    else {
-        renderer.render(scene, camera);
-        animateDNCycle = false;
-        directionalLight.position.set(10, 5, 15);
-        console.log(rayCasts);
-        return;
-    }
-    requestAnimationFrame(animateDayNightCycle);
-}
+//     if (directionalLight.position.x >= 0) {
+//         if (parseInt(time) % 50 == 0) {
+//             let rayCastScenesI = [];
+//             for (let i = 1; i >= -0.9; i -= 0.1) {
+//                 let rayCastScenesJ = [];
+//                 for (let j = -1; j < 1; j += 0.2) {
+//                     const inverseDL = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
+//                     raycaster.set(new THREE.Vector3(i, 0.5, j), inverseDL.normalize());
+//                     console.log(raycaster.intersectObjects(scene.children).length);
+//                     // const color = raycaster.intersectObjects(scene.children).length > 0 ? 0x000000 : 0xff0000;
+//                     // const helperA = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 300, color);
+//                     // scene.add(helperA);
+//                     // helpers.push(helperA);
+//                     // rayCastScenesJ.push(raycaster.intersectObjects(scene.children).length > 0 ? 1 : 0);
+//                 }
+//                 // helpers.forEach(help => scene.remove(help));
+//                 rayCastScenesI.push(rayCastScenesJ);
+//             }
+//             rayCasts.push(rayCastScenesI);
+//         }
+//         directionalLight.position.x = Math.sin(time * 0.02) * 20;
+//         directionalLight.position.y = Math.sin(time * 0.02) * 20;
+//         directionalLight.position.z = Math.cos(time * 0.02) * 20;
+//     }
+//     else {
+//         renderer.render(scene, camera);
+//         animateDNCycle = false;
+//         directionalLight.position.set(10, 5, 15);
+//         console.log(rayCasts);
+//         return;
+//     }
+//     requestAnimationFrame(animateDayNightCycle2);
+// }
 
 
 

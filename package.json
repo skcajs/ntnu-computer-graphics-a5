@@ -12,6 +12,7 @@
     "vite": "^4.0.0"
   },
   "dependencies": {
+    "heatmap.js": "^2.0.5",
     "three": "^0.148.0",
     "three-orbitcontrols": "^2.110.3"
   }
