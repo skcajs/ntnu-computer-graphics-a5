@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "heatmap.js": "^2.0.5",
+    "plotly.js": "^1.47.4",
+    "plotly.js-dist-min": "^2.18.0",
     "three": "^0.148.0",
     "three-orbitcontrols": "^2.110.3"
   }

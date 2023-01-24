@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import CityScene from './cityScene';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Vector3 } from 'three';
-import h337 from 'heatmap.js/build/heatmap';
+import Plotly from 'plotly.js-dist-min';
 
 const scene = new CityScene();
 
@@ -14,9 +14,9 @@ const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true });
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
-var heatmap = h337.create({
-    container: renderer.domElement
-});
+// var heatmap = h337.create({
+//     container: renderer.domElement
+// });
 
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -210,9 +210,16 @@ renderer.render(scene, camera);
 function calculateHeatMap() {
     if (toggleHeatMap) {
         toggleHeatMap = !toggleHeatMap;
-        heatmap.setData({ data: hmCoords });
-        // console.log(hmCoords);
-        console.log(heatmap.getDataURL());
+        let hmx = hmCoords.map(coord => { coord[0]; });
+        let data = [
+            {
+                z: hmCoords,
+                type: 'heatmap'
+            }
+        ];
+
+        Plotly.newPlot('myDiv', data);
+        console.log(hmCoords);
         return;
     }
     raycasters = [];
@@ -222,10 +229,11 @@ function calculateHeatMap() {
 
     const hmResX = 16;
     const hmResZ = 8;
+    let hmRows = [];
 
     for (let x = -hmResX; x <= hmResX; x++) {
         for (let z = -hmResZ / 2; z <= hmResZ / 2; z++) {
-            hmCoords.push({ x: x * 4 / hmResX, y: z * 4 / hmResZ, value: 0 });
+            hmCoords.push([x * 4 / hmResX, z * 4 / hmResZ, 0]);
             const hmRayCaster = new THREE.Raycaster(new Vector3(x * 4 / hmResX, 0, z * 4 / hmResZ));
             // const raycasterHelper = new THREE.ArrowHelper(hmRayCaster.ray.direction, hmRayCaster.ray.origin, 300, 0xFFFFFF);
             raycasters.push(hmRayCaster);
@@ -236,66 +244,5 @@ function calculateHeatMap() {
     time = 0;
     directionalLight.position.set(10, 0, 15);
 }
-
-
-
-
-
-
-
-// calculateHeatMap(renderer, scene, camera);
-
-
-// function calculateHeatMap2() {
-//     time = 0;
-//     heatMapData = [];
-//     directionalLight.position.set(10, 0, 15);
-//     if (animateDNCycle) {
-//         animateDayNightCycle2();
-//     }
-
-// }
-
-// function animateDayNightCycle2() {
-//     renderer.render(scene, hmCamera);
-//     time += 0.1;
-
-//     let helpers = [];
-
-//     if (directionalLight.position.x >= 0) {
-//         if (parseInt(time) % 50 == 0) {
-//             let rayCastScenesI = [];
-//             for (let i = 1; i >= -0.9; i -= 0.1) {
-//                 let rayCastScenesJ = [];
-//                 for (let j = -1; j < 1; j += 0.2) {
-//                     const inverseDL = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
-//                     raycaster.set(new THREE.Vector3(i, 0.5, j), inverseDL.normalize());
-//                     console.log(raycaster.intersectObjects(scene.children).length);
-//                     // const color = raycaster.intersectObjects(scene.children).length > 0 ? 0x000000 : 0xff0000;
-//                     // const helperA = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 300, color);
-//                     // scene.add(helperA);
-//                     // helpers.push(helperA);
-//                     // rayCastScenesJ.push(raycaster.intersectObjects(scene.children).length > 0 ? 1 : 0);
-//                 }
-//                 // helpers.forEach(help => scene.remove(help));
-//                 rayCastScenesI.push(rayCastScenesJ);
-//             }
-//             rayCasts.push(rayCastScenesI);
-//         }
-//         directionalLight.position.x = Math.sin(time * 0.02) * 20;
-//         directionalLight.position.y = Math.sin(time * 0.02) * 20;
-//         directionalLight.position.z = Math.cos(time * 0.02) * 20;
-//     }
-//     else {
-//         renderer.render(scene, camera);
-//         animateDNCycle = false;
-//         directionalLight.position.set(10, 5, 15);
-//         console.log(rayCasts);
-//         return;
-//     }
-//     requestAnimationFrame(animateDayNightCycle2);
-// }
-
-
 
 
