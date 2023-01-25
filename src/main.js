@@ -6,9 +6,21 @@ import Plotly from 'plotly.js-dist-min';
 
 const scene = new CityScene();
 
-// Plotly.newPlot('myDiv', []);
+var canvas = document.createElement('canvas'),
+    ctx = canvas.getContext('2d');
+
+canvas.width = 8;
+canvas.height = 8;
+
+ctx.fillStyle = '#000000';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.strokeStyle = '#ff00ff';
+ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+var parser = new DOMParser();
 
 let time = 0;
+let sudoTime = 0;
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true });
@@ -68,20 +80,6 @@ let toggleHeatMap = false;
 
 // Raycast Helpers
 var raycasterHelpers;
-// for (let x = -hmResX; x <= hmResX; x++) {
-//     for (let z = -hmResZ / 2; z <= hmResZ / 2; z++) {
-//         hmCoords.push([x * 4 / hmResX, z * 4 / hmResZ]);
-//         const hmRayCaster = new THREE.Raycaster(new Vector3(x * 4 / hmResX, 0, z * 4 / hmResZ));
-//         // const raycasterHelper = new THREE.ArrowHelper(hmRayCaster.ray.direction, hmRayCaster.ray.origin, 300, 0xFFFFFF);
-//         raycasters.push(hmRayCaster);
-//         // raycasterHelpers.push(raycasterHelper);
-//         // scene.add(raycasterHelper);
-//     }
-// }
-
-// Raycast Helper
-// const rayCasterHelper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 300, 0xFFFFFF);
-// scene.add(rayCasterHelper);
 
 
 const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 5, 0xffffff);
@@ -161,22 +159,6 @@ function animate() {
     directionalLight.position.y = Math.sin(time * 0.02) * 20;
     directionalLight.position.z = Math.cos(time * 0.02) * 20;
 
-    // // TESTING INTERSECTON POINTS
-    // const rayCasterLighDir = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
-    // raycaster.set(new THREE.Vector3(0, 0, 2), rayCasterLighDir.normalize());
-
-    // const found = raycaster.intersectObjects(scene.children);
-    // if (found.length > 0 && found.some(obj => obj.object.castShadow == true)) {
-    //     rayCasterHelper.line.material = new THREE.LineBasicMaterial({ color: 0xff0000 });
-    // } else {
-    //     rayCasterHelper.line.material = new THREE.LineBasicMaterial({ color: 0xffffff });
-    // }
-    // rayCasterHelper.setDirection(raycaster.ray.direction);
-    // rayCasterHelper.position.set(raycaster.ray.origin.x, raycaster.ray.origin.y, raycaster.ray.origin.z);
-    // // ----------
-
-    // TESTING WITH MANY POINTS
-
     if (toggleHeatMap) {
         const rayCasterLighDir = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
         raycasters.map((raycaster, i) => {
@@ -191,8 +173,12 @@ function animate() {
             }
         });
 
-        // let data = heatmapData(hmCoords);
-        // Plotly.newPlot('myDiv', data);
+        if (sudoTime == 50) {
+            sudoTime = 0;
+            heatmapImage();
+        }
+
+        sudoTime += 1;
     }
 
 
@@ -208,20 +194,15 @@ renderer.render(scene, camera);
 
 function calculateHeatMap() {
     if (toggleHeatMap) {
+        raycasterHelpers.forEach(raycasterHelper => scene.remove(raycasterHelper));
+        scene.children[0].children[0].material = scene.children[0].children[0].userData.baseMaterial;
         directionalLightHelper.color = 0xffffff;
         directionalLightHelper.update();
         toggleHeatMap = !toggleHeatMap;
-        let data = heatmapData(hmCoords);
-        Plotly.newPlot('myDiv', data, {
-            marker: false,
-            width: 800,
-            height: 400,
-
-        });
-        console.log(data);
-        console.log(hmCoords);
+        // heatmapImage();
         return;
     }
+
     directionalLightHelper.color = 0xff0000;
     directionalLightHelper.update();
     raycasters = [];
@@ -275,3 +256,45 @@ function heatmapData(data) {
 }
 
 
+function heatmapImage() {
+    let data = heatmapData(hmCoords);
+    Plotly.newPlot('myDiv', data, {
+        marker: false,
+        width: 800,
+        height: 400,
+
+    });
+    let image = new Image();
+    const el = document.getElementsByClassName('hm')[0].innerHTML;
+    const doc = parser.parseFromString(el, "text/html");
+    rotate(doc.body.children[0].getAttribute("xlink:href"), 90, function (resultBase64) {
+        image.setAttribute('src', resultBase64);
+        let texture = new THREE.Texture();
+        texture.image = image;
+        image.onload = function () {
+            texture.needsUpdate = true;
+        };
+        scene.children[0].children[0].material = new THREE.MeshPhongMaterial({ map: texture });
+    });
+}
+
+
+function rotate(srcBase64, degrees, callback) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const image = new Image();
+
+    image.onload = function () {
+        canvas.width = degrees % 180 === 0 ? image.width : image.height;
+        canvas.height = degrees % 180 === 0 ? image.height : image.width;
+
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(degrees * Math.PI / 180);
+        ctx.scale(-1, 1);
+        ctx.drawImage(image, image.width / -2, image.height / -2);
+
+        callback(canvas.toDataURL());
+    };
+
+    image.src = srcBase64;
+}

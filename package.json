@@ -16,6 +16,7 @@
     "plotly.js": "^1.47.4",
     "plotly.js-dist-min": "^2.18.0",
     "three": "^0.148.0",
-    "three-orbitcontrols": "^2.110.3"
+    "three-orbitcontrols": "^2.110.3",
+    "visual-heatmap": "^1.0.5"
   }
 }
