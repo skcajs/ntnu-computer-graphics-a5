@@ -51,6 +51,7 @@ scene.add(hmCamera);
 const light = new THREE.AmbientLight(0xFFFFFF, 0.25);
 scene.add(light);
 
+// const directionalLight = new THREE.PointLight(0xffffff, 0.5);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 directionalLight.castShadow = true;
 directionalLight.position.set(10, 0, 15);
@@ -131,6 +132,16 @@ window.addEventListener('mousemove', event => {
 window.addEventListener('keydown', event => {
     switch (event.code) {
         case "Delete": {
+            // delete
+            if (draggable) {
+                parent = draggable.parent;
+                parent.remove(draggable);
+                draggable = null;
+                animate();
+            }
+            break;
+        }
+        case "KeyD": {
             // delete
             if (draggable) {
                 parent = draggable.parent;
