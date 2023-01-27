@@ -237,6 +237,7 @@ function animate() {
     dragObject();
     requestAnimationFrame(animate);
     controls.update();
+    renderer.setSize(innerWidth, innerHeight);
     renderer.render(scene, camera);
 }
 animate();
