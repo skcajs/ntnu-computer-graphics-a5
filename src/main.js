@@ -3,8 +3,6 @@ import CityScene from './cityScene';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Vector3 } from 'three';
 import Plotly from 'plotly.js-dist-min';
-import Skyscraper from './buildings/skyscraper';
-import { Mesh } from 'three';
 
 const scene = new CityScene();
 
@@ -51,14 +49,12 @@ scene.add(hmCamera);
 const light = new THREE.AmbientLight(0xFFFFFF, 0.25);
 scene.add(light);
 
-// const directionalLight = new THREE.PointLight(0xffffff, 0.5);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 directionalLight.castShadow = true;
 directionalLight.position.set(10, 0, 15);
 directionalLight.target.position.set(0, 0, 0);
 scene.add(directionalLight);
 scene.add(directionalLight.target);
-
 
 const d = 10;
 directionalLight.shadow.camera.left = - d;
@@ -172,6 +168,7 @@ window.addEventListener('keydown', event => {
         case "KeyL": {
             showLights = !showLights;
             if (showLights) {
+                showRaycasterHelpers = false;
                 lights.forEach(light => scene.add(light['light']).add(light['lightbar']).add(light['lightrchelper']));
             } else {
                 lights.forEach(light => scene.remove(light['light']).remove(light['lightbar']).remove(light['lightrchelper']));
@@ -214,7 +211,6 @@ function animate() {
     if (showLights) {
         lights.forEach(light => {
             light['lightrc'].set(light['lightrc'].ray.origin, rayCasterLighDir);
-            let smallestHeight = 0.2;
             let intensity = (new THREE.Vector3(0, 1, 0).dot(rayCasterLighDir) / (Math.sqrt(1 + (rayCasterLighDir.x ** 2 + rayCasterLighDir.y ** 2 + rayCasterLighDir.z ** 2))));
             intensity = intensity > 0 ? intensity : 0;
             let inSun = 1;
@@ -227,7 +223,10 @@ function animate() {
                 light['lightrchelper'].line.material = new THREE.LineBasicMaterial({ color: 0xffffff });
             }
 
-            light['lightval'] += intensity * inSun / 200;
+            light['lightrchelper'].visible = showRaycasterHelpers;
+
+            light['lightval'] += intensity * inSun / 100;
+            if (light['lightval'] < 0.2) light['lightval'] = 0.2;
             light['lightbar'].scale.y = light['lightval'];
         });
         console.log(lights[0]['lightval'], lights[1]['lightval'], lights[2]['lightval']);
