@@ -47,6 +47,7 @@ export default class Centerpiece extends THREE.Group {
         const cube = new THREE.Mesh(geometry, textureCube);
         cube.position.y = cubeHeight * n;
         cube.castShadow = true;
+        this.name = 'feature';
         this.add(cube);
     }
 }

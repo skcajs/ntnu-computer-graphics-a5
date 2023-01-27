@@ -84,8 +84,15 @@ const lights = createLights();
 var raycasterHelpers;
 let showRaycasterHelpers = false;
 
+const visibilityRaycasters = [];
+const visibilityRaycastersHelpers = [];
+let visibility = 5;
+
 let showDirectionalLightHelper = false;
 const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 5, 0xffff00);
+
+setVisibilityRaycasters();
+visibilityRaycastersHelpers.forEach(rc => scene.add(rc));
 
 window.addEventListener('mousedown', event => {
     mouseClick.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -233,6 +240,12 @@ function animate() {
     }
 
     directionalLightHelper.update();
+
+    let currentVisibility = updateVisibilityRaycasters();
+    if (currentVisibility != visibility) {
+        visibility = currentVisibility;
+        console.log("new visbility ", parseInt(100 - visibility / 12 * 100), "%");
+    }
 
     dragObject();
     requestAnimationFrame(animate);
@@ -406,3 +419,31 @@ function addPlane(scene) {
     plane.userData.ground = true;
     scene.add(plane);
 };
+
+function setVisibilityRaycasters() {
+    const feature = scene.children.find(child => child.name == 'feature').position;
+    for (let i = 0; i <= 4.5; i += 0.4) {
+        camera.updateMatrix();
+        let origin = new Vector3(feature.x, i, feature.z);
+        let dir = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z).sub(origin).normalize();
+        const raycaster = new THREE.Raycaster(origin, dir);
+        // const raycasterHelper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 300, 0xFFFFFF);
+        visibilityRaycasters.push(raycaster);
+        // visibilityRaycastersHelpers.push(raycasterHelper);
+    }
+}
+
+function updateVisibilityRaycasters() {
+    let x = 0;
+    for (let i = 0; i < visibilityRaycasters.length; i++) {
+        const direction = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z).sub(visibilityRaycasters[i].ray.origin).normalize();
+        visibilityRaycasters[i].set(visibilityRaycasters[i].ray.origin, direction);
+        // visibilityRaycastersHelpers[i].setDirection(visibilityRaycasters[i].ray.direction);
+
+        const found = visibilityRaycasters[i].intersectObjects(scene.children);
+        if (found.some(obj => obj.object.name == "building")) {
+            x += 1;
+        }
+    }
+    return x;
+}

@@ -119,6 +119,7 @@ export default class CityBlock extends THREE.Group {
 
     typeFive() {
         const centerpiece = new Centerpiece();
+        this.name = 'feature';
         this.add(centerpiece);
     }
 }

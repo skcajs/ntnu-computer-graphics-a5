@@ -25,6 +25,7 @@ export default class Mall extends THREE.Group {
         cube.position.y = cubeHeight / 2;
         cube.position.z = 0.25;
         cube.castShadow = true;
+        cube.name = 'building';
         this.add(cube);
 
         const cubeTextures2 = [
@@ -43,6 +44,7 @@ export default class Mall extends THREE.Group {
         cube2.position.z = -0.25;
         cube2.position.y = cubeHeight2 / 2;
         cube2.castShadow = true;
+        cube2.name = 'building';
         this.add(cube2);
     }
 }

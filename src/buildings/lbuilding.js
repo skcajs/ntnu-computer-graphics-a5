@@ -23,6 +23,7 @@ export default class Lbuilding extends THREE.Group {
         const cube = new THREE.Mesh(geometry, textureCube);
         cube.position.y = cubeHeight / 2;
         cube.castShadow = true;
+        cube.name = 'building';
 
         this.add(cube);
 
@@ -43,6 +44,7 @@ export default class Lbuilding extends THREE.Group {
         cube2.position.x = -0.25;
         cube2.position.z = -1.5;
         cube2.castShadow = true;
+        cube2.name = 'building';
 
         this.add(cube2);
 

@@ -24,6 +24,7 @@ export default class Skyscraper extends THREE.Group {
         const skyscraper = new THREE.Mesh(geometry, textureSkyscraper);
         skyscraper.position.y = skyscraperHeight / 2;
         skyscraper.castShadow = true;
+        skyscraper.name = 'building';
         skyscraper.userData.draggable = true;
         skyscraper.userData.name = 'skyscraper';
         skyscraper.userData.baseMaterial = skyscraper.material;
