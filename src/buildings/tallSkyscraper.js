@@ -16,7 +16,7 @@ export default class TallSkyscraper extends THREE.Group {
         ];
 
         const textureSkyscraper = skyscraperTextures.map(texture => {
-            return new THREE.MeshStandardMaterial({ color: 0xFFFFFF, map: loader.load(`../../textures/${texture}`) });
+            return new THREE.MeshStandardMaterial({ color: 0xFFFFFF, map: loader.load(`/textures/${texture}`) });
         });
 
         const skyscraperHeight = 3;

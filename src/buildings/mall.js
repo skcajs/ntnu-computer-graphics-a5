@@ -16,7 +16,7 @@ export default class Mall extends THREE.Group {
         ];
 
         const textureCube = cubeTextures.map(texture => {
-            return new THREE.MeshPhongMaterial({ color: 0xFFFFFF, map: loader.load(`../../textures/${texture}`) });
+            return new THREE.MeshPhongMaterial({ color: 0xFFFFFF, map: loader.load(`/textures/${texture}`) });
         });
 
         const cubeHeight = 1.25;
