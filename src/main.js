@@ -3,6 +3,7 @@ import CityScene from './cityScene';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Vector3 } from 'three';
 import Plotly from 'plotly.js-dist-min';
+import { Sky } from 'three/addons/objects/Sky.js';
 
 const scene = new CityScene();
 
@@ -24,6 +25,16 @@ let sudoTime = 0;
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true });
+
+const sky = new Sky();
+sky.scale.setScalar(450000);
+
+const phi = THREE.MathUtils.degToRad(90);
+const theta = THREE.MathUtils.degToRad(180);
+const sunPosition = new Vector3().setFromSphericalCoords(1, phi, theta);
+sky.material.uniforms.sunPosition.value = sunPosition;
+
+scene.add(sky);
 
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -76,6 +87,8 @@ var raycasters;
 var hmCoords;
 
 let showHeatMap = false;
+
+let sunValue = 12;
 
 let showLights = false;
 const lights = createLights();
@@ -186,11 +199,26 @@ window.addEventListener('keydown', event => {
 });
 
 function animate() {
-    time += 0.03;
-    directionalLight.position.x = Math.sin(time * 0.02) * 20;
-    directionalLight.position.y = Math.sin(time * 0.02) * 20;
-    directionalLight.position.z = Math.cos(time * 0.02) * 20;
-    const rayCasterLighDir = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z).normalize();
+
+
+    time += 0.01;
+
+    let timeOfDay = time % 24;
+
+
+    const angle = (timeOfDay / 24) * 2 * Math.PI;
+
+    const x = 50 * Math.sin(angle);                   // East-west movement
+    const y = 50 * Math.sin(angle - Math.PI / 2);     // Height: peak at noon
+    const z = -50 * Math.cos(angle);
+
+    directionalLight.position.set(x, y, z);
+    directionalLight.target.position.set(0, 0, 0);
+
+    // const rayCasterLighDir = new THREE.Vector3(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z).normalize();
+
+    sky.material.uniforms.sunPosition.value = directionalLight.position;
+    sky.material.uniforms.sunPosition.needsUpdate = true;
 
     if (showHeatMap) {
         raycasters.map((raycaster, i) => {
